@@ -1,0 +1,22 @@
+.grid {
+    display: grid;
+    /* Adjust 250px to your minimum column size before wrapping */
+    grid-template-columns: repeat(auto-fit, minmax(325px, 1fr));
+    gap: 4px;
+    /* Space between items */
+}
+
+.grid {
+    .card {
+        border: 1px solid #ccc;
+        padding: 2em;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .pokemon_image_container {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+    }
+}

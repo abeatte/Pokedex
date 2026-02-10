@@ -1,6 +1,15 @@
 import { gql } from "graphql-request";
 import z from "zod";
 
+const CatchRate = z.object({
+  base: z.number(), // 30,
+  percentageWithOrdinaryPokeballAtFullHealth: z.string(), // "8.8%"
+});
+
+const Type = z.object({
+  name: z.string(), // "Rock"
+});
+
 export const Pokemon = z.object({
   key: z.string(),
   backSprite: z.url(), // "https://play.pokemonshowdown.com/sprites/gen5-back/ironthorns.png",
@@ -16,10 +25,7 @@ export const Pokemon = z.object({
   },
   baseStatsTotal: z.number(), // 570,
   bulbapediaPage: z.url(), // "https://bulbapedia.bulbagarden.net/wiki/Iron Thorns_(Pokémon)",
-  catchRate: {
-    base: z.number(), // 30,
-    percentageWithOrdinaryPokeballAtFullHealth: z.string(), // "8.8%"
-  },
+  catchRate: CatchRate,
   classification: z.string(), // "Paradox Pokémon",
   // respelling: null,
   // ipa: null,
@@ -66,11 +72,7 @@ export const Pokemon = z.object({
   smogonTier: z.string(), // "NUBL",
   species: z.string(), // "Iron Thorns",
   sprite: z.url(), // "https://play.pokemonshowdown.com/sprites/gen5/ironthorns.png",
-  types: [
-    {
-      name: z.string(), // "Rock"
-    }
-  ],
+  types: z.array(Type),
   weight: z.number(), // 303,
   mythical: z.boolean(), // false,
   legendary: z.boolean(), // false

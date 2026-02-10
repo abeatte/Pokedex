@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAllPokemon, type GetAllPokemonResponse } from "./graphql/getAllPokemon";
 import request from "graphql-request";
 import Pokemon from "./Pokemon";
+import './Pokemon.css'
 
 function PokemonList() {
 
@@ -20,7 +21,7 @@ function PokemonList() {
   const pokemen = data?.getAllPokemon?.map(pokemon => (<Pokemon pokemon={pokemon} />));
 
   return (
-    <div>
+    <div className="grid">
       {pokemen}
     </div>
   )
