@@ -1,6 +1,11 @@
+.pokemon-list-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
 .grid {
     margin: 0 auto;
-    padding: 2rem;
     display: grid;
     /* Adjust 250px to your minimum column size before wrapping */
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));

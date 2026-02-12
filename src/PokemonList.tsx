@@ -21,8 +21,10 @@ function PokemonList() {
   const pokemen = data?.getAllPokemon?.map(pokemon => (<Pokemon pokemon={pokemon} />));
 
   return (
-    <div className="grid">
-      {pokemen}
+    <div className="pokemon-list-container">
+      <div className="grid">
+        {pokemen}
+      </div>
     </div>
   )
 }

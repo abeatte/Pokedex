@@ -1,5 +1,8 @@
 #root {
   width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   text-align: center;
   background-color: lightslategray;
 }
@@ -27,7 +30,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
+  a .logo.spin {
     animation: logo-spin infinite 20s linear;
   }
 }
