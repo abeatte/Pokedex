@@ -1,7 +1,7 @@
 import { FaPlay } from "react-icons/fa";
 import type { Pokemon } from "./graphql/getAllPokemon";
 import './Pokemon.css'
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 function pokemon(props: { pokemon: Pokemon }) {
     const { pokemon } = props;
@@ -18,24 +18,41 @@ function pokemon(props: { pokemon: Pokemon }) {
         minimumHatchTime, maximumHatchTime,
     } = pokemon;
 
-    const [spriteClicked, setSpriteClicked] = useState(false);
-    const [showShiny, setShowShiny] = useState(false);
-    const [isFading, setIsFading] = useState(false);
+    const [flipKey, setFlipKey] = useState(0);
+    const [displayIndex, setDisplayIndex] = useState(0);
 
-    useEffect(() => {
-        // Only animate if both regular and shiny sprites exist
-        if (!sprite || !shinySprite) return;
+    const hasBothSprites = sprite && backSprite;
+    const hasShinySprites = shinySprite && shinyBackSprite;
 
-        const interval = setInterval(() => {
-            setIsFading(true);
-            setTimeout(() => {
-                setShowShiny(prev => !prev);
-                setIsFading(false);
-            }, 600); // Match fade-out duration
-        }, 5000);
+    // Determine which sprite to show based on index
+    // 0: front, 1: back, 2: shiny front, 3: shiny back
+    const getCurrentSprite = () => {
+        if (!hasShinySprites) {
+            // If no shiny sprites, just alternate between front and back
+            return displayIndex % 2 === 0 ? sprite : backSprite;
+        }
+        
+        // Full cycle: front -> back -> shiny front -> shiny back
+        switch (displayIndex % 4) {
+            case 0: return sprite;
+            case 1: return backSprite;
+            case 2: return shinySprite;
+            case 3: return shinyBackSprite;
+            default: return sprite;
+        }
+    };
 
-        return () => clearInterval(interval);
-    }, [sprite, shinySprite]);
+    const handleSpriteClick = () => {
+        if (!hasBothSprites) return;
+        
+        // Trigger animation by changing key
+        setFlipKey(prev => prev + 1);
+        
+        // Change sprite at midpoint of animation (500ms into 1s animation)
+        setTimeout(() => {
+            setDisplayIndex(prev => prev + 1);
+        }, 500);
+    };
 
     const playCry = () => {
         new Audio(cry)
@@ -47,8 +64,8 @@ function pokemon(props: { pokemon: Pokemon }) {
         <div className="card">
             <div className="name">{species}</div>
             <div className="image_window">
-                <span className="pokemon_image_container" onClick={() => setSpriteClicked(prev => !prev)} >
-                    <img className={isFading ? 'fading' : ''} src={showShiny ? (spriteClicked ? shinyBackSprite : shinySprite) : (spriteClicked ? backSprite : sprite)} />
+                <span className="pokemon_image_container" onClick={handleSpriteClick} >
+                    <img key={flipKey} className="flipping" src={getCurrentSprite()} />
                 </span>
                 <button className="play_button" onClick={playCry}>
                 <FaPlay />
