@@ -20,6 +20,7 @@ function pokemon(props: { pokemon: Pokemon }) {
 
     const [flipKey, setFlipKey] = useState(0);
     const [displayIndex, setDisplayIndex] = useState(0);
+    const [imageError, setImageError] = useState(false);
 
     const hasBothSprites = sprite && backSprite;
     const hasShinySprites = shinySprite && shinyBackSprite;
@@ -31,7 +32,7 @@ function pokemon(props: { pokemon: Pokemon }) {
             // If no shiny sprites, just alternate between front and back
             return displayIndex % 2 === 0 ? sprite : backSprite;
         }
-        
+
         // Full cycle: front -> back -> shiny front -> shiny back
         switch (displayIndex % 4) {
             case 0: return sprite;
@@ -44,10 +45,10 @@ function pokemon(props: { pokemon: Pokemon }) {
 
     const handleSpriteClick = () => {
         if (!hasBothSprites) return;
-        
+
         // Trigger animation by changing key
         setFlipKey(prev => prev + 1);
-        
+
         // Change sprite at midpoint of animation (500ms into 1s animation)
         setTimeout(() => {
             setDisplayIndex(prev => prev + 1);
@@ -60,16 +61,25 @@ function pokemon(props: { pokemon: Pokemon }) {
             .catch(error => console.error(`Audio playback failed for ${species}'s cry:`, error));
     };
 
+    const handleError = () => {
+        setImageError(true);
+    }
+
+    if (imageError) {
+        // This works with ErrorBoundary to catch and remove this Card when images fail to load
+        throw new Error(`Unable to load Pokemon image for ${species}`);
+    }
+
     return (
         <div className="card">
             <div className="name">{species}</div>
             <div className="image_window">
                 <span className="pokemon_image_container" onClick={handleSpriteClick} >
-                    <img key={flipKey} className="flipping" src={getCurrentSprite()} />
+                    <img key={flipKey} className="flipping" src={getCurrentSprite()} onError={handleError} />
                 </span>
                 <button className="play_button" onClick={playCry}>
-                <FaPlay />
-            </button>
+                    <FaPlay />
+                </button>
             </div>
             <div className="stats">
                 <div>Height: {height}m</div>

@@ -4,6 +4,8 @@ import request from "graphql-request";
 import Pokemon from "./Pokemon";
 import './css/Pokemon.css'
 import FetchNextPageSentinel from "./FetchNextPageSentinel";
+import ErrorBoundary from "./ErrorBoundary";
+import { Fragment } from "react";
 
 const PAGE_SIZE = 10;
 
@@ -39,17 +41,21 @@ function PokemonList() {
     placeholderData: keepPreviousData,
   })
 
-  const pokemen = queryResponse?.data?.pages.map((page : GetAllPokemonResponse) => (
-    <>
-      {page.getAllPokemon?.map(pokemon => (<Pokemon key={pokemon.key} pokemon={pokemon} />))}
-    </>
+  const pokemen = queryResponse?.data?.pages.map((page: GetAllPokemonResponse, idx: number) => (
+    <Fragment key={idx}>
+      {page.getAllPokemon?.map(pokemon => (
+        <ErrorBoundary key={pokemon.key} >
+          <Pokemon pokemon={pokemon} />
+        </ErrorBoundary>
+      ))}
+    </Fragment>
   ));
 
   return (
     <div className="pokemon-list-container">
       <div className="grid">
         {pokemen}
-        <FetchNextPageSentinel fetchParams={queryResponse}/>
+        <FetchNextPageSentinel key={'fetchNextPageSentinel'} fetchParams={queryResponse} />
       </div>
     </div>
   )
