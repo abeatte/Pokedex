@@ -8,13 +8,14 @@ import request from "graphql-request";
 import { useHeaderInfo } from "./HeaderInfoContext";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
+const POKEMON_START_OFFSET = 93;
 const PAGE_SIZE = 10;
 
 function PokemonList() {
   const { searchQuery } = useHeaderInfo();
 
   const fetchAllPokemon = async ({ pageParam = 0 }: { pageParam: number }) => {
-    const offset = PAGE_SIZE * pageParam;
+    const offset = POKEMON_START_OFFSET + (PAGE_SIZE * pageParam);
     return request('https://graphqlpokemon.favware.tech/v8', getAllPokemon, {
       "offset": offset,
       "take": PAGE_SIZE,
