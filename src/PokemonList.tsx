@@ -1,4 +1,4 @@
-import { getAllPokemon, getFuzzyPokemon, type GetAllPokemonResponse, type GetFuzzyPokemonResponse } from "./graphql/getPokemon";
+import { getAllPokemon, getFuzzyPokemon, type Pokemon as PokemonType, type GetAllPokemonResponse, type GetFuzzyPokemonResponse } from "./graphql/getPokemon";
 import Pokemon from "./Pokemon";
 import './css/Pokemon.css'
 import FetchNextPageSentinel from "./FetchNextPageSentinel";
@@ -11,24 +11,31 @@ import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 const POKEMON_START_OFFSET = 93;
 const PAGE_SIZE = 10;
 
+interface PokemonResponse {
+  "pokemon": [
+    PokemonType
+  ]
+}
+
 function PokemonList() {
   const { searchQuery } = useHeaderInfo();
 
   const fetchAllPokemon = async ({ pageParam = 0 }: { pageParam: number }) => {
     const offset = POKEMON_START_OFFSET + (PAGE_SIZE * pageParam);
-    return request('https://graphqlpokemon.favware.tech/v8', getAllPokemon, {
+    const response = await request<GetAllPokemonResponse>('https://graphqlpokemon.favware.tech/v8', getAllPokemon, {
       "offset": offset,
       "take": PAGE_SIZE,
       "reverse": false,
       "offsetFlavorTexts": offset,
       "takeFlavorTexts": PAGE_SIZE,
       "reverseFlavorTexts": false
-    })
+    });
+    return { pokemon: response.getAllPokemon };
   };
 
   const fetchFuzzyPokemon = async ({ pageParam = 0 }: { pageParam: number }) => {
     const offset = PAGE_SIZE * pageParam;
-    return request('https://graphqlpokemon.favware.tech/v8', getFuzzyPokemon, {
+    const response = await request<GetFuzzyPokemonResponse>('https://graphqlpokemon.favware.tech/v8', getFuzzyPokemon, {
       "offset": offset,
       "take": PAGE_SIZE,
       "pokemon": searchQuery,
@@ -37,6 +44,7 @@ function PokemonList() {
       "takeFlavorTexts": PAGE_SIZE,
       "reverseFlavorTexts": false
     })
+    return { pokemon: response.getFuzzyPokemon };
   };
 
   const getAllQueryResponse = useInfiniteQuery({
@@ -44,7 +52,7 @@ function PokemonList() {
     queryFn: fetchAllPokemon,
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) => {
-      if (lastPage.length === 0) {
+      if (lastPage.pokemon.length < PAGE_SIZE) {
         return undefined
       }
       return lastPageParam + 1
@@ -64,7 +72,7 @@ function PokemonList() {
     queryFn: fetchFuzzyPokemon,
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) => {
-      if (lastPage.length === 0) {
+      if (lastPage.pokemon.length < PAGE_SIZE) {
         return undefined
       }
       return lastPageParam + 1
@@ -81,9 +89,9 @@ function PokemonList() {
 
   const queryResponse = searchQuery.length === 0 ? getAllQueryResponse : searchQueryResponse;
 
-  const pokemen = queryResponse?.data?.pages.map((page: GetAllPokemonResponse & GetFuzzyPokemonResponse, idx: number) => (
+  const pokemen = queryResponse?.data?.pages.map((page: PokemonResponse, idx: number) => (
     <Fragment key={idx}>
-      {(page.getAllPokemon ?? page.getFuzzyPokemon)?.map(pokemon => (
+      {page.pokemon?.map(pokemon => (
         <ErrorBoundary key={pokemon.key} >
           <Pokemon pokemon={pokemon} />
         </ErrorBoundary>
