@@ -1,7 +1,7 @@
 import { FaPlay } from "react-icons/fa";
 import type { Pokemon } from "./graphql/getPokemon";
 import './css/Pokemon.css'
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function pokemon(props: { pokemon: Pokemon }) {
     const { pokemon } = props;
@@ -18,23 +18,46 @@ function pokemon(props: { pokemon: Pokemon }) {
         minimumHatchTime, maximumHatchTime,
     } = pokemon;
 
-    const [flipKey, setFlipKey] = useState(0);
     const [displayIndex, setDisplayIndex] = useState(0);
     const [imageError, setImageError] = useState(false);
+    const [hasFlipped, setHasFlipped] = useState(false);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [isImageAnimating, setIsImageAnimating] = useState(false);
+    const cardRef = useRef<HTMLDivElement>(null);
 
     const hasBothSprites = sprite && backSprite;
     const hasShinySprites = shinySprite && shinyBackSprite;
 
+    // Trigger flip animation when card enters viewport
+    useEffect(() => {
+        if (!cardRef.current || hasFlipped) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && !hasFlipped) {
+                    setIsAnimating(true);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        observer.observe(cardRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [hasFlipped]);
+
     // Determine which sprite to show based on index
     // 0: front, 1: back, 2: shiny front, 3: shiny back
-    const getCurrentSprite = () => {
+    const getSpriteSrcByIndex = (index: number) => {
         if (!hasShinySprites) {
             // If no shiny sprites, just alternate between front and back
-            return displayIndex % 2 === 0 ? sprite : backSprite;
+            return index % 2 === 0 ? sprite : backSprite;
         }
 
         // Full cycle: front -> back -> shiny front -> shiny back
-        switch (displayIndex % 4) {
+        switch (index % 4) {
             case 0: return sprite;
             case 1: return backSprite;
             case 2: return shinySprite;
@@ -46,13 +69,7 @@ function pokemon(props: { pokemon: Pokemon }) {
     const handleSpriteClick = () => {
         if (!hasBothSprites) return;
 
-        // Trigger animation by changing key
-        setFlipKey(prev => prev + 1);
-
-        // Change sprite at midpoint of animation (500ms into 1s animation)
-        setTimeout(() => {
-            setDisplayIndex(prev => prev + 1);
-        }, 500);
+        setIsImageAnimating(true);
     };
 
     const playCry = () => {
@@ -76,26 +93,62 @@ function pokemon(props: { pokemon: Pokemon }) {
         throw new Error(`Unable to load Pokemon image for ${species}`);
     }
 
+    const spriteCount = hasShinySprites ? 4 : 2;
+
     return (
-        <div className="card">
-            <div className="name">{species}</div>
-            <div className="image_window">
-                <span className="pokemon_image_container" onClick={handleSpriteClick} >
-                    <img key={flipKey} className="flipping" src={getCurrentSprite()} onError={handleError} />
-                </span>
-                {playCryButton}
-            </div>
-            <div className="stats">
-                <div>Height: {height}m</div>
-                <div>Weight: {weight}kg</div>
-                <div>Number: {num}</div>
-                <div>Types: {Array.from(types.map(type => type.name)).join(', ')}</div>
-                {mythical || legendary && (<div>
-                    {mythical && (<span>Mythical: {mythical}</span>)}
-                    {legendary && (<span>Legendary: {legendary}</span>)}
-                </div>)}
-                <div>Catch Rate: {catchRate.base} | {catchRate.percentageWithOrdinaryPokeballAtFullHealth}</div>
-                <div>Hatch Time: {minimumHatchTime} steps - {maximumHatchTime} steps</div>
+        <div
+            ref={cardRef}
+            className={`card_container ${hasFlipped ? 'flipped' : ''} ${isAnimating ? 'animating' : ''}`}
+            onTransitionEnd={() => {
+                setIsAnimating(false);
+                setHasFlipped(true);
+            }}
+        >
+            <div className="card_flipper">
+                <div className="card back"></div>
+                <div className="card front">
+                    <div className="name">{species}</div>
+                    <div className="image_window">
+                        <span
+                            className={`pokemon_image_container ${isImageAnimating ? 'animating' : ''}`}>
+                            <div className="image_flipper" onClick={handleSpriteClick} >
+                                {
+                                    [...Array(spriteCount).keys()].map((idx) => {
+                                        const nextDisplayIndex = (displayIndex + 1) % spriteCount;
+                                        return (
+                                            <img 
+                                                key={`sprite-${idx}`}
+                                                className={`image ${displayIndex == idx ? 'front' : nextDisplayIndex == idx ? 'back' : 'gone'}`}
+                                                src={getSpriteSrcByIndex(idx)}
+                                                onError={handleError}
+                                                onTransitionEnd={(e) => {
+                                                    console.log(idx, e.target, displayIndex, nextDisplayIndex, isImageAnimating)
+                                                    if (displayIndex == idx && isImageAnimating) {
+                                                        setIsImageAnimating(false);
+
+                                                        setDisplayIndex(nextDisplayIndex);
+                                                    }
+                                                }}
+                                            />
+                                        );
+                                    })}
+                            </div>
+                        </span>
+                        {playCryButton}
+                    </div>
+                    <div className="stats">
+                        <div>Height: {height}m</div>
+                        <div>Weight: {weight}kg</div>
+                        <div>Number: {num}</div>
+                        <div>Types: {Array.from(types.map(type => type.name)).join(', ')}</div>
+                        {mythical || legendary && (<div>
+                            {mythical && (<span>Mythical: {mythical}</span>)}
+                            {legendary && (<span>Legendary: {legendary}</span>)}
+                        </div>)}
+                        <div>Catch Rate: {catchRate.base} | {catchRate.percentageWithOrdinaryPokeballAtFullHealth}</div>
+                        <div>Hatch Time: {minimumHatchTime} steps - {maximumHatchTime} steps</div>
+                    </div>
+                </div>
             </div>
         </div>
     );
