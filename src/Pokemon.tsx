@@ -61,6 +61,12 @@ function pokemon(props: { pokemon: Pokemon }) {
             .catch(error => console.error(`Audio playback failed for ${species}'s cry:`, error));
     };
 
+    const playCryButton = cry && (
+        <button className="play_button" onClick={playCry}>
+            <FaPlay />
+        </button>
+    );
+
     const handleError = () => {
         setImageError(true);
     }
@@ -77,9 +83,7 @@ function pokemon(props: { pokemon: Pokemon }) {
                 <span className="pokemon_image_container" onClick={handleSpriteClick} >
                     <img key={flipKey} className="flipping" src={getCurrentSprite()} onError={handleError} />
                 </span>
-                <button className="play_button" onClick={playCry}>
-                    <FaPlay />
-                </button>
+                {playCryButton}
             </div>
             <div className="stats">
                 <div>Height: {height}m</div>
